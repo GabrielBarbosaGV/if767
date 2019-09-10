@@ -12,3 +12,6 @@ returns -1 if not found"
 (defun string-equals (first second)
   "Determines if two strings are equal"
   (= (get-mismatch-position first second) -1))
+
+(defun get-text ()
+  (with-open-file (in (elt 1 *posix-argv*)) (read in)))
