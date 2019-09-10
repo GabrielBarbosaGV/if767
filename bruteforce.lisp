@@ -10,3 +10,5 @@
        for i from 0 upto (- (length text) len)
        when (string-equals (subseq text i (+ i len)) pattern) do (push i occ))
     (nreverse occ)))
+
+(print (brute-force))
