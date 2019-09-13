@@ -5,10 +5,6 @@
   (when (null text) (setf text (get-text)))
   (when (null pattern)
     (setf pattern (elt *posix-argv* 2)))
-  (let ((occ nil) (len (length pattern)))
-    (loop
-       for i from 0 upto (- (length text) len)
-       when (string-equals (subseq text i (+ i len)) pattern) do (push i occ))
-    (nreverse occ)))
+  (get-occurrences text pattern :increment-function #'(lambda (i) (1+ i))))
 
 (print (brute-force))
