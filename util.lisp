@@ -20,3 +20,16 @@ a string"
     (let ((contents (make-string (file-length in))))
       (read-sequence contents in)
       contents)))
+
+(defun get-occurrences (text pattern &key (increment-function (lambda (i) (1+ i))))
+  "\
+Loops over text attempting to match pattern against it,
+returning occurrences's indices, increment-function is used to
+increment search index. If not provided, defaults to
+incrementing by one, in equivalence to the
+brute-force approach"
+  (let ((occ nil))
+    (do ((i 0 (funcall increment-function i))) ((> i (- (length text) (length pattern))))
+      (when (string-equals (subseq text i (+ i (length pattern))) pattern)
+	(push i occ)))
+    (nreverse occ)))
