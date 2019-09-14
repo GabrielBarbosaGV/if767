@@ -15,4 +15,4 @@
   (get-occurrences text pattern
 		   :increment-function (kmp-increment text pattern)))
 
-(print (knuth-morris-pratt))
+(submit (knuth-morris-pratt))

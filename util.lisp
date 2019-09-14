@@ -33,3 +33,7 @@ brute-force approach"
       (when (string-equals (subseq text i (+ i (length pattern))) pattern)
 	(push i occ)))
     (nreverse occ)))
+
+(defun submit (occurrences)
+  "Imprime valores de occurrences"
+  (format t "~{~a ~}" occurrences))

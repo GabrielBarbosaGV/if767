@@ -7,4 +7,4 @@
     (setf pattern (elt *posix-argv* 2)))
   (get-occurrences text pattern :increment-function #'(lambda (i) (1+ i))))
 
-(print (brute-force))
+(submit (brute-force))
