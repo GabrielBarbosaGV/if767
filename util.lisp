@@ -29,11 +29,12 @@ increment search index. If not provided, defaults to
 incrementing by one, in equivalence to the
 brute-force approach"
   (let ((occ nil))
-    (do ((i 0 (funcall increment-function i))) ((> i (- (length text) (length pattern))))
+    (do ((i 0 (funcall increment-function i)))
+	((> i (- (length text) (length pattern))))
       (when (string-equals (subseq text i (+ i (length pattern))) pattern)
 	(push i occ)))
     (nreverse occ)))
 
 (defun submit (occurrences)
-  "Imprime valores de occurrences"
+  "Prints values of occurrences"
   (format t "~{~a ~}" occurrences))
