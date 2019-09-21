@@ -1,13 +1,25 @@
-(defun get-mismatch-position (first second)
+(defun compare-chars-by-position (first second position)
+  (eq (aref first position) (aref second position)))
+
+(defun get-mismatch-position (first second &key (backwards nil))
   "Get index of mismatch position between two equally long strings,
 returns -1 if not found"
-  (unless (not (eql (length first) (length second)))
-    (or
-     (loop
-	for i from 0
-	for a across first
-	for b across second
-	when (not (eql a b)) return i) -1)))
+  (let* ((len (length first))
+	 (initial-value (if backwards (1- len) 0))
+	 (step-func (if backwards #'1- #'1+))
+	 (exit-cond #'(lambda (i)
+			(not (compare-chars-by-position
+			      first second i))))
+	 (test-func (if backwards
+			#'(lambda (i)
+			    (or (< i 0)
+			     (funcall exit-cond i)))
+		        #'(lambda (i)
+			    (or (>= i len)
+			     (funcall exit-cond i))))))
+    (do ((i initial-value (funcall step-func i)))
+	((funcall test-func i)
+	 (if (= i len) -1 i))))) ;(= i len) -> no mismatch, return -1
 
 (defun string-equals (first second)
   "Determines if two strings are equal"
@@ -21,20 +33,32 @@ a string"
       (read-sequence contents in)
       contents)))
 
-(defun get-occurrences (text pattern &key (increment-function (lambda (i) (1+ i))))
+(defun get-occurrences
+    (text pattern
+     &key
+       (backwards nil)
+       (increment-function
+	#'(lambda (&rest r) (declare (ignore r)) 1)))
   "\
 Loops over text attempting to match pattern against it,
 returning occurrences's indices, increment-function is used to
 increment search index. If not provided, defaults to
 incrementing by one, in equivalence to the
 brute-force approach"
-  (let ((occ nil))
-    (do ((i 0 (funcall increment-function i)))
-	((> i (- (length text) (length pattern))))
-      (when (string-equals (subseq text i (+ i (length pattern))) pattern)
-	(push i occ)))
-    (nreverse occ)))
+  (let* ((occ nil) ;occ: occurrences
+	(lt (length text))
+	(lp (length pattern))
+	(lendiff (- lt lp)))
+    (do ((i 0))
+	 ((> i lendiff) (nreverse occ))
+      (let* ((slice (subseq text i (+ i lp)))
+	     (mp
+	      (get-mismatch-position
+	       slice pattern
+	       :backwards backwards))) ;mp: mismatch position
+	(when (= -1 mp) (push i occ))
+	(incf i (funcall increment-function mp))))))
 
 (defun submit (occurrences)
-  "Prints values of occurrences"
+  "Prints occurrences's values"
   (format t "~{~a ~}" occurrences))
