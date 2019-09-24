@@ -3,7 +3,8 @@
 
 (defun kmp-increment (pattern)
   (let ((borders (get-borders pattern)))
-    (lambda (mp) ;mp: Mismatch position
+    (lambda (mp &rest r) ;mp: Mismatch position
+      (declare (ignore r))
       (1+ (aref borders (max mp 0))))))
 
 (defun knuth-morris-pratt (text pattern)
