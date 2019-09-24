@@ -57,7 +57,7 @@ brute-force approach"
 	       slice pattern
 	       :backwards backwards))) ;mp: mismatch position
 	(when (= -1 mp) (push i occ))
-	(incf i (funcall increment-function mp))))))
+	(incf i (funcall increment-function mp i))))))
 
 (defun submit (occurrences)
   "Prints occurrences's values"
