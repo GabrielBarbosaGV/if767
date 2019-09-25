@@ -4,7 +4,7 @@
   (let* ((m (length pattern))
 	 (type-size (+ 2 (round (/ m 256))))
 	 (b (make-array
-	     m
+	     (1+ m)
 	     ;; b will contain numbers as large as m, and thus we calculate
 	     ;; the required number of bytes for these numbers
 	     :element-type `(signed-byte ,type-size)
@@ -12,13 +12,15 @@
 	 (i 1)
 	 (j 0))
     (setf (aref b 0) -1)
-    (do () ((< i m) b)
+    (do () ((>= i m) b)
       (do () ((or
 	       (>= j m)
 	       (>= (+ i j) m)
 	       (not (eq (aref pattern (+ i j)) (aref pattern j)))))
 	(incf j)
-	(setf (aref b (+ i j)) j)))))
+	(setf (aref b (+ i j)) j))
+      (incf i (max 1 (- j (aref b j))))
+      (setf j (max 0 (aref b j))))))
 
 (defun get-goodsuffix-table (pattern)
   (let* ((m (length pattern))
