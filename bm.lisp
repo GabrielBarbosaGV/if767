@@ -9,10 +9,14 @@
 	     (funcall badacc (aref text (max 1 (+ mp i))))))
 	(max 1 (- mp char-pos))))))
 
-(defun goodsuffix-increment (text pattern)
-  (let ((gs get-goodsuffix-table))
-    (lambda (mp i)
-      (aref gs mp))))
+(defun goodsuffix-increment (pattern)
+  (let ((gs (get-goodsuffix-table pattern)))
+    (lambda (mp &rest r)
+      (declare (ignore r))
+      (aref gs
+	    (if (= -1 mp)
+		(1- (length pattern))
+		mp)))))
   
 (defun boyer-moore-increment (text pattern)
   (let ((bi (badchar-increment text pattern))
