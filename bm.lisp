@@ -20,7 +20,7 @@
   
 (defun boyer-moore-increment (text pattern)
   (let ((bi (badchar-increment text pattern))
-	(gi (goodsuffix-increment text pattern)))
+	(gi (goodsuffix-increment pattern)))
     (lambda (&rest r)
       (max
        (apply bi r)
