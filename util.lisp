@@ -33,6 +33,11 @@ a string"
       (read-sequence contents in)
       contents)))
 
+(defun vector-range (&key (start 0) (end 0) (step 1))
+  (let ((v (make-array (ceiling (/ (- end start) step)))))
+    (do ((i 0 (1+ i) (val start (+ val step))) ((>= val end) v)
+	 (setf (aref v i) val)))))
+
 (defun get-occurrences
     (text pattern
      &key
