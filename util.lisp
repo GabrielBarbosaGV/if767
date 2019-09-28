@@ -39,8 +39,8 @@ Returns vector with elements from start (inclusive) incremented
 by step to end (exclusive)"
   (when (zerop step) (error 'zero-step))
   (let ((v (make-array (ceiling (/ (- end start) step)))))
-    (do ((i 0 (1+ i) (val start (+ val step))) ((>= val end) v)
-	 (setf (aref v i) val)))))
+    (do ((i 0 (1+ i)) (val start (+ val step))) ((>= val end) v)
+	 (setf (aref v i) val))))
 
 (defun get-occurrences
     (text pattern
