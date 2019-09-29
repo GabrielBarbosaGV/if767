@@ -1,7 +1,5 @@
 (require 'util (or (probe-file #p"util.fasl") (probe-file #p"util.lisp")))
 
-(defun phi (a b) (if (eq a b) 0 1))
-
 (defun sellers (text pattern error-size)
   (let* ((n (length text))
 	 (m (length pattern))

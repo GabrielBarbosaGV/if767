@@ -1,3 +1,5 @@
+(defun phi (a b) (if (eq a b) 0 1))
+
 (defun compare-chars-by-position (first second position)
   (eq (aref first position) (aref second position)))
 
