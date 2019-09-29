@@ -1,5 +1,6 @@
 (require 'util (or (probe-file #p"util.fasl") (probe-file #p"util.lisp")))
-(require 'set (or (probe-file #p"set.fasl") (probe-file #p"set.lisp")))
+(require 'hash-set (or (probe-file #p"hashset.fasl") (probe-file #p"hashset.lisp")))
+(require 'queue (or (probe-file #p"queue.fasl") (probe-file #p"set.lisp")))
 
 (defun next-column (pattern
 		    column
@@ -26,7 +27,7 @@
 	 (states (make-hash-table :test 'equal))
 	 (delta (make-hash-table :test 'equal))
 	 (queue (make-instance 'queue))
-	 (final (make-instance 'set))
+	 (final (make-instance 'hash-set))
 	 (q-zero (make-array (1+ m)))
 	 (state-count 1))
     (do ((i 0 (1+ i))) ((> i m))
@@ -49,7 +50,7 @@
 		  (incf state-count)
 		  (queue-append queue next-state)
 		  (when (<= (aref next-state m) error-size)
-		    (set-put final i-next)))
+		    (hash-set-put final i-next)))
 		(setf i-next (gethash next-state states)))
 	    (setf (gethash (cons i-state (aref alphabet i)) delta)
 		  i-next)))))))
