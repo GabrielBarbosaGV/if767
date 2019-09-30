@@ -4,17 +4,17 @@
     :reader inner-hash-table)))
 
 
-(defgeneric hash-set-in ((hash-set hash-set) value))
-(defgeneric hash-set-put ((hash-set hash-set) value))
-(defgeneric hash-set-remove ((hash-set hash-set) value))
-(defgeneric hash-set-map ((hash-set hash-set) func))
+(defgeneric hash-set-in (hash-set value))
+(defgeneric hash-set-put (hash-set value))
+(defgeneric hash-set-remove (hash-set value))
+(defgeneric hash-set-map (hash-set func))
 
 
 (defmethod hash-set-in ((hash-set hash-set) value)
-  (nth-value 1 (gethash (inner-hash-table hash-set) value)))
+  (nth-value 1 (gethash value (inner-hash-table hash-set))))
 
 (defmethod hash-set-put ((hash-set hash-set) value)
-  (setf (gethash (inner-hash-table hash-set) value) t))
+  (setf (gethash value (inner-hash-table hash-set)) t))
 
 (defmethod hash-set-remove ((hash-set hash-set) value)
   (remhash value (inner-hash-table hash-set)))
@@ -23,5 +23,7 @@
   (let ((new-hash-set (make-instance 'hash-set)))
     (maphash
      #'(lambda (a b)
-	 (hash-set-put hash-set (funcall func a)))
+	 (declare (ignore b))
+	 (hash-set-put new-hash-set (funcall func a)))
+     (inner-hash-table hash-set))
     new-hash-set))
