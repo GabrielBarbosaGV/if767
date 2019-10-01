@@ -67,10 +67,10 @@
 	(when (hash-set-in final cur)
 	  (push j occ))))))
 
-(defun ukkonen (text pattern error-size)
+(defun ukkonen-scanner (pattern error-size)
   (let ((alphabet (make-array 128 :element-type 'character)))
     (do ((i 0 (1+ i))) ((>= i 128))
       (setf (aref alphabet i) (code-char i)))
     (let ((finite-state-machine
 	   (make-finite-state-machine pattern error-size alphabet)))
-      (scan finite-state-machine text))))
+	  (lambda (text) (scan finite-state-machine text)))))
