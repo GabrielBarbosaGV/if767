@@ -27,10 +27,10 @@ returns -1 if not found"
   "Determines if two strings are equal"
   (= (get-mismatch-position first second) -1))
 
-(defun get-text ()
+(defun get-text (filepath)
   "Reads file with with filepath = (elt *posix-argv* 1) and returns it as
 a string"
-  (with-open-file (in (elt *posix-argv* 1))
+  (with-open-file (in filepath)
     (let ((contents (make-string (file-length in))))
       (read-sequence contents in)
       contents)))
