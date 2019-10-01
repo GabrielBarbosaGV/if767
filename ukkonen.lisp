@@ -68,8 +68,8 @@
 	  (push j occ))))))
 
 (defun ukkonen-scanner (pattern error-size)
-  (let ((alphabet (make-array 128 :element-type 'character)))
-    (do ((i 0 (1+ i))) ((>= i 128))
+  (let ((alphabet (make-array 200 :element-type 'character)))
+    (do ((i 0 (1+ i))) ((>= i 200))
       (setf (aref alphabet i) (code-char i)))
     (let ((finite-state-machine
 	   (make-finite-state-machine pattern error-size alphabet)))
