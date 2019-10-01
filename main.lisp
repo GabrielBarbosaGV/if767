@@ -67,3 +67,20 @@ to functions"
     (let ((opt-str (car arg)))
       (when (eq (aref opt-str 0) #\-)
 	  (process-option opt-str (cdr arg))))))
+
+(defun get-patterns ()
+  (if (null *pattern-file*) (list (elt *posix-argv* *positional-arguments-start*))
+      (with-open-file (in *pattern-file*)
+	(do ((l (read-line in nil) (read-line in nil))
+	     (patterns nil))
+	    ((null l) patterns)
+	  (push l patterns)))))
+
+(defun get-file-paths ()
+  (let ((start-position (if (null *pattern-string*)
+			    *positional-arguments-start*
+			    (1+ *positional-arguments-start*))))
+    (do ((c (elt *posix-argv* start-position) (cdr c))
+	 (files nil))
+	((null c) files)
+      (push (car c) files))))
