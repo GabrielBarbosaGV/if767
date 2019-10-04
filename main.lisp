@@ -22,13 +22,6 @@
 (defvar *unknown-options* nil
   "List of unknown passed options")
 
-
-(defun is-among (value &rest values)
-  "\
-Tests for membership of value among values,
-used for brevity"
-  (member value values :test 'equal))
-
 (defun process-opts ()
   (when (= (length *posix-argv* 1)) (setf *needs-help* t))
   (do ((arg (cdr *posix-argv*) (cdr arg))) ((or *needs-help* (null arg)))
@@ -87,7 +80,7 @@ to functions"
 
 (defun run-algorithm-for-file (file-path)
   (let ((patterns (get-patterns))
-	(algorithms (decide-algorithms patterns))
+	(algorithms (get-pattern-to-implementation-hash-table patterns))
 	(occlists nil))
     (with-open-file (in file-path)
       (do ((l (read-line in nil) (read-line in nil))) ((null l))
@@ -95,7 +88,7 @@ to functions"
 	    ((null pattern))
 	  (push
 	   (funcall (gethash (car pattern) algorithms)
-		    l pattern *error-size*)
+		    l pattern)
 	   occlists))
 	(format
 	 t
@@ -111,12 +104,49 @@ to functions"
 	    ((null l) (nreverse patterns))
 	  (push l patterns)))))
 
-(defun decide-algorithms (patterns)
-  (if (not (null *algorithm-name))
-      (decide-algorithms-by-name patterns)
-      (decide-algorithms-by-arguments patterns)))
+(defun get-pattern-to-implementation-hash-table (patterns)
+  (if (not (null *algorithm-name*))
+      (get-pattern-to-implementation-hash-table-by-algorithm-name patterns)
+      (get-pattern-to-implementation-hash-table-by-options patterns)))
 
-(defun decide-algorithms-by-name (patterns)
-  (cond
-    ; TODO TODO TODO
+(defun get-pattern-to-implementation-hash-table-by-algorithm-name (patterns)
+  (let ((pattern-to-algorithm (make-hash-table :test 'equal)))
+    (cond
+      ((is-among *algorithm-name* "knuth-morris-pratt" "kmp")
+       (set-same-hash-table-entries-for-list
+	pattern-to-algorithm
+	patterns
+	#'(lambda (text pattern)
+	    (knuth-morris-pratt text pattern))))
+      ((is-among *algorith-name* "boyer-moore" "bm")
+       (set-same-hash-table-entries-for-list
+	pattern-to-algorithm
+	patterns
+	#'(lambda (text pattern)
+	    (boyer-moore text pattern))))
+      ((is-among *algorithm-name* "sellers")
+       (set-same-hash-table-entries-for-list
+	pattern-to-algorithm
+	patterns
+	#'(lambda (text pattern)
+	    (sellers text pattern *edit-distance*))))
+      ((is-among *algorithm-name* "ukkonen")
+       (set-hash-table-entries-for-pattern-ukkonen
+	pattern-to-algorithm
+	patterns)))))
 
+(defun is-among (value &rest values)
+  "\
+Tests for membership of value among values,
+used for brevity"
+  (member value values :test 'equal))
+
+(defun set-same-hash-table-entries-for-list (hash-table keys value)
+  (dolist (key keys hash-table)
+    (setf (gethash key hash-table) value))) 
+
+(defun set-hash-table-entries-for-patterns-ukkonen (hash-table patterns)
+  (dolist (pattern patterns)
+    (setf (gethash pattern hash-table)
+	  (let ((scanner (ukkonnen-scanner pattern *edit-distance*)))
+	    #'(lambda (text pattern) (funcall scanner text))))))
