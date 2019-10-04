@@ -7,7 +7,7 @@
 (defvar *needs-help* nil
   "If help should be printed")
 
-(defvar *edit-distance* 0
+(defvar *edit-distance* nil
   "How much given pattern can be edited")
 
 (defvar *pattern-file* nil
@@ -29,8 +29,22 @@ Tests for membership of value among values,
 used for brevity"
   (member value values :test 'equal))
 
+(defun process-opts ()
+  (when (= (length *posix-argv* 1)) (setf *needs-help* t))
+  (do ((arg (cdr *posix-argv*) (cdr arg))) ((or *needs-help* (null arg)))
+    (let ((opt-str (car arg)))
+      (when (eq (aref opt-str 0) #\-)
+	  (process-option opt-str (cdr arg))))))
+
+(defun process-option (opt-str list-cdr)
+  (let ((option (remove-leading-dashes opt-str))
+	(parameter (car list-cdr)))
+    (configure-parameter option parameter)))
+
 (defun remove-leading-dashes (opt-str)
-  (do ((i 0 (1+ i))) ((eq #\- (aref opt-str i)) (subseq opt-str i))))
+  (do ((i 0 (1+ i)))
+      ((not (eq #\- (aref opt-str i)))
+       (subseq opt-str i))))
 
 (defun configure-parameter (option parameter)
   "\
@@ -56,25 +70,11 @@ to functions"
 	(concatenate 'string "Unknown option:" parameter)
 	*unknown-options*))))
 
-(defun process-option (opt-str list-cdr)
-  (let ((option (remove-leading-dashes opt-str))
-	(parameter (car list-cdr)))
-    (configure-parameter option parameter)))
-
-(defun process-opts ()
-  (when (= (length *posix-argv* 1)) (setf *needs-help* t))
-  (do ((arg (cdr *posix-argv*) (cdr arg))) ((or *needs-help* (null arg)))
-    (let ((opt-str (car arg)))
-      (when (eq (aref opt-str 0) #\-)
-	  (process-option opt-str (cdr arg))))))
-
-(defun get-patterns ()
-  (if (null *pattern-file*) (list (elt *posix-argv* *positional-arguments-start*))
-      (with-open-file (in *pattern-file*)
-	(do ((l (read-line in nil) (read-line in nil))
-	     (patterns nil))
-	    ((null l) patterns)
-	  (push l patterns)))))
+(defun run-algorithm-for-files ()
+  (let ((file-paths (get-file-paths)))
+    (do ((cur-file-path file-paths (cdr cur-file-path)))
+	((null cur-file-path))
+      (run-algorithm-for-file (car cur-file-path)))))
 
 (defun get-file-paths ()
   (let ((start-position (if (null *pattern-string*)
@@ -82,5 +82,41 @@ to functions"
 			    (1+ *positional-arguments-start*))))
     (do ((c (elt *posix-argv* start-position) (cdr c))
 	 (files nil))
-	((null c) files)
+	((null c) (nreverse files))
       (push (car c) files))))
+
+(defun run-algorithm-for-file (file-path)
+  (let ((patterns (get-patterns))
+	(algorithms (decide-algorithms patterns))
+	(occlists nil))
+    (with-open-file (in file-path)
+      (do ((l (read-line in nil) (read-line in nil))) ((null l))
+	(do ((pattern patterns (cdr pattern)))
+	    ((null pattern))
+	  (push
+	   (funcall (gethash (car pattern) algorithms)
+		    l pattern *error-size*)
+	   occlists))
+	(format
+	 t
+	 "~{~{~a: ~a~^ ~} ~}~%~a"
+	 (mapcar #'list patterns occlists)
+	 l)))))
+
+(defun get-patterns ()
+  (if (null *pattern-file*) (list (elt *posix-argv* *positional-arguments-start*))
+      (with-open-file (in *pattern-file*)
+	(do ((l (read-line in nil) (read-line in nil))
+	     (patterns nil))
+	    ((null l) (nreverse patterns))
+	  (push l patterns)))))
+
+(defun decide-algorithms (patterns)
+  (if (not (null *algorithm-name))
+      (decide-algorithms-by-name patterns)
+      (decide-algorithms-by-arguments patterns)))
+
+(defun decide-algorithms-by-name (patterns)
+  (cond
+    ; TODO TODO TODO
+
