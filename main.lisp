@@ -13,17 +13,21 @@
 (defvar *pattern-file* nil
   "Path to pattern file")
 
-(defvar *algorithm_name* nil
+(defvar *algorithm-name* nil
   "Name of algorithm to execute")
 
-(defvar *positional-args-start* 1
+(defvar *count-only* nil
+  "If only count of occurrences should be returned")
+
+(defvar *positional-arguments-start* 1
   "Position in argument list where positional arguments start")
 
 (defvar *unknown-options* nil
   "List of unknown passed options")
 
 (defun process-opts ()
-  (when (= (length *posix-argv* 1)) (setf *needs-help* t))
+  (setf *positional-arguments-start* 1)
+  (when (= (length *posix-argv*) 1) (setf *needs-help* t))
   (do ((arg (cdr *posix-argv*) (cdr arg))) ((or *needs-help* (null arg)))
     (let ((opt-str (car arg)))
       (when (eq (aref opt-str 0) #\-)
@@ -63,6 +67,10 @@ to functions"
 	(concatenate 'string "Unknown option:" parameter)
 	*unknown-options*))))
 
+(defun main ()
+  (process-opts)
+  (run-algorithm-for-files))
+
 (defun run-algorithm-for-files ()
   (let ((file-paths (get-file-paths)))
     (do ((cur-file-path file-paths (cdr cur-file-path)))
@@ -70,38 +78,45 @@ to functions"
       (run-algorithm-for-file (car cur-file-path)))))
 
 (defun get-file-paths ()
-  (let ((start-position (if (null *pattern-string*)
+  (let ((start-position (if (not (null *pattern-file*))
 			    *positional-arguments-start*
 			    (1+ *positional-arguments-start*))))
-    (do ((c (elt *posix-argv* start-position) (cdr c))
+    (do ((c (nthcdr start-position *posix-argv*) (cdr c))
 	 (files nil))
 	((null c) (nreverse files))
       (push (car c) files))))
 
 (defun run-algorithm-for-file (file-path)
-  (let ((patterns (get-patterns))
-	(algorithms (get-pattern-to-implementation-hash-table patterns))
-	(occlists nil))
+  (let* ((patterns (get-patterns))
+	 (algorithms (get-pattern-to-implementation-hash-table patterns))
+	 (occlists nil)
+	 (count 0))
+    (print patterns)
     (with-open-file (in file-path)
       (do ((l (read-line in nil) (read-line in nil))) ((null l))
 	(do ((pattern patterns (cdr pattern)))
 	    ((null pattern))
 	  (push
 	   (funcall (gethash (car pattern) algorithms)
-		    l pattern)
+		    l (car pattern))
 	   occlists))
-	(format
-	 t
-	 "~{~{~a: ~a~^ ~} ~}~%~a"
-	 (mapcar #'list patterns occlists)
-	 l)))))
+	(unless *count-only*
+	  (format
+	   t
+	   "~{~{~a: ~a~^~%~}~%~}~a~%~%"
+	   (mapcar #'list (reverse patterns) occlists)
+	   l)))
+      (when *count-only*
+	(maphash
+	 #'(lambda (key value) (format t "~a: ~a~%" key value))
+	 (get-occurrence-count-for-pattern patterns occlists))))))
 
 (defun get-patterns ()
   (if (null *pattern-file*) (list (elt *posix-argv* *positional-arguments-start*))
       (with-open-file (in *pattern-file*)
 	(do ((l (read-line in nil) (read-line in nil))
 	     (patterns nil))
-	    ((null l) (nreverse patterns))
+	    ((null l) patterns)
 	  (push l patterns)))))
 
 (defun get-pattern-to-implementation-hash-table (patterns)
@@ -118,7 +133,7 @@ to functions"
 	patterns
 	#'(lambda (text pattern)
 	    (knuth-morris-pratt text pattern))))
-      ((is-among *algorith-name* "boyer-moore" "bm")
+      ((is-among *algorithm-name* "boyer-moore" "bm")
        (set-same-hash-table-entries-for-list
 	pattern-to-algorithm
 	patterns
@@ -135,6 +150,15 @@ to functions"
 	pattern-to-algorithm
 	patterns)))))
 
+(defun get-pattern-to-implementation-hash-table-by-options (patterns)
+  (flet ((choose-by-name (algorithm-name)
+	   (setf *algorithm-name* algorithm-name)
+	   (get-pattern-to-implementation-hash-table-by-algorithm-name patterns)))
+	 (if (not (null *edit-distance*))
+	     (choose-by-name "ukkonen")
+	     (choose-by-name "boyer-moore"))))
+  
+
 (defun is-among (value &rest values)
   "\
 Tests for membership of value among values,
@@ -150,3 +174,13 @@ used for brevity"
     (setf (gethash pattern hash-table)
 	  (let ((scanner (ukkonnen-scanner pattern *edit-distance*)))
 	    #'(lambda (text pattern) (funcall scanner text))))))
+
+(defun get-occurrence-count-for-pattern (patterns occlists)
+  (let ((pattern-to-count (make-hash-table :test 'equal)))
+    (set-same-hash-table-entries-for-list
+     pattern-to-count patterns 0)
+    (do ((cur-occlists-cdr (copy occlists))) ((null cur-occlists-cdr))
+      (dolist (pattern patterns)
+	(incf (gethash pattern pattern-to-count)
+	      (length (car cur-occlists-cdr)))
+	(pop cur-occlists-cdr)))))
