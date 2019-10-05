@@ -22,7 +22,6 @@
 	      (up
 	       (1+ (aref cur (1- i)))))
 	  (setf (aref cur i) (min diag left up))))
-      (print d)
       (when (<= (aref cur m) error-size)
 	(push (1- j) occ))
       (rotatef cur prev))))

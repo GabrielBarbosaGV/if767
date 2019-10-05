@@ -7,7 +7,26 @@
 (defvar *needs-help* nil
   "If help should be printed")
 
-(defvar *edit-distance* nil
+(defvar *help-string*
+  "\
+Welcome to pmt!
+Usage:
+pmt [options] pattern textfile [textfile...]
+
+Options:
+  -e, --edit emax: Maximum edit distance for matching algorithm given by emax, defaults to zero.
+  -p, --pattern patternfile: File containing patterns to be found, one per line.
+  -a, --algorithm algorithm_name: Name of algorithm to be run, can be one of 
+
+          knuth-morris-pratt, kmp
+          boyer-moore, bm
+          sellers
+          ukkonen
+
+  -c, --count: Show occurrence count instead of occurrences themselves.
+  -h, --help: Prints this message.")
+
+(defvar *edit-distance* 0
   "How much given pattern can be edited")
 
 (defvar *pattern-file* nil
@@ -69,7 +88,12 @@ to functions"
 
 (defun main ()
   (process-opts)
-  (run-algorithm-for-files))
+  (if *needs-help*
+      (print-help)
+      (run-algorithm-for-files)))
+
+(defun print-help ()
+  (print *help-string*))
 
 (defun run-algorithm-for-files ()
   (let ((file-paths (get-file-paths)))
@@ -89,9 +113,7 @@ to functions"
 (defun run-algorithm-for-file (file-path)
   (let* ((patterns (get-patterns))
 	 (algorithms (get-pattern-to-implementation-hash-table patterns))
-	 (occlists nil)
-	 (count 0))
-    (print patterns)
+	 (occlists nil))
     (with-open-file (in file-path)
       (do ((l (read-line in nil) (read-line in nil))) ((null l))
 	(do ((pattern patterns (cdr pattern)))
@@ -179,7 +201,8 @@ used for brevity"
   (let ((pattern-to-count (make-hash-table :test 'equal)))
     (set-same-hash-table-entries-for-list
      pattern-to-count patterns 0)
-    (do ((cur-occlists-cdr (copy occlists))) ((null cur-occlists-cdr))
+    (do ((cur-occlists-cdr (copy-list occlists)))
+	((null cur-occlists-cdr) pattern-to-count)
       (dolist (pattern patterns)
 	(incf (gethash pattern pattern-to-count)
 	      (length (car cur-occlists-cdr)))

@@ -6,7 +6,7 @@
   (let ((badacc (get-badchar-hashfunc pattern)))
     (lambda (mp i)
       (let ((char-pos
-	     (funcall badacc (aref text (max 1 (+ mp i))))))
+	     (funcall badacc (aref text (max 0 (+ mp i))))))
 	(max 1 (- mp char-pos))))))
 
 (defun goodsuffix-increment (pattern)

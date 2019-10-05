@@ -1,5 +1,5 @@
 (defun create-badchar-table (pattern)
-  (let ((ascii-chars (make-array 128 :initial-element -1)))
+  (let ((ascii-chars (make-array 2000 :initial-element -1)))
     (loop
        for i from 0
        for c across pattern do
